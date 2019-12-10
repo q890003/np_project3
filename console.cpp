@@ -7,7 +7,7 @@
 #include <boost/asio.hpp>
 #include <boost/format.hpp>
 #include <boost/bind.hpp>
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string.hpp>   //for repace_all
 using namespace std;
 
 using namespace boost::asio;
@@ -18,11 +18,13 @@ class console_format{
     public:
         class Npshell {
             public:
-                std::string name;
+                std::string name;   //differenciate from boost::algorithm::string.hpp>
                 std::string port;
                 std::string file;
             }npshells[5];
-        string console_response(string querry_env){
+        string console_response(string querry_env){   //string is an object.
+
+            /* format for intial setting */
             std::string console_msg ="\
             <html lang=\"en\">\
                 <head>\
@@ -58,8 +60,9 @@ class console_format{
                         color: #ffffff;\
                     }\
                 </style>\
-            </html>\
-            ";
+            </html>";
+
+            /* format for intial interface */
             boost::format fmt("  <body>\n"
                       "    <table class=\"table table-dark table-bordered\">\n"
                       "      <thead>\n"
@@ -74,6 +77,8 @@ class console_format{
                       "      </tbody>\n"
                       "    </table>\n"
                       "  </body>\n");
+
+
             vector<string> test;
             boost::split(test, querry_env, boost::is_any_of("&"));
             std::string key;
@@ -97,11 +102,6 @@ class console_format{
                         shell_num ++;
                 }
             }
-            /*
-            for(int i = 0 ; i < 5 ; i++){
-            cout << npshells[i].name << "," << npshells[i].file << endl;
-            }
-            */
             std::string table;
             std::string session;
             int count = 0;
@@ -117,97 +117,35 @@ class console_format{
 
 
 };
-
+//paradiam for learning OOP.
 class Appender {
  public:
-  static Appender &getInstance() {
-    static Appender instance;
-    return instance;
+  static Appender &getInstance() {      //static function is created when defining class "object", not declatrion of instance.
+    static Appender instance;           //static member function can only access static member data. In here, it create only one instnce.
+    return instance;                    //in addiition, it sets public, so to be accessable.
   }
+  /* static member function 只能存取 static member variable
+    reason: static function can't use "this", which is to say it can not access normal variable/function members.
+  */                                  
 
-  Appender(const Appender &) = delete;
+  Appender(const Appender &) = delete;    //disallow copy constructor to copy.
 
-  void operator=(const Appender &) = delete;
-
-  void output_shell(std::string session, std::string content) {
-    encode(content);
-    boost::replace_all(content, "\n", "&#13;");
-    boost::replace_all(content, "\r", "");
-    boost::format fmt
-        ("<script>document.getElementById('%1%').innerHTML += '%2%';</script>");
-    std::cout << fmt%session%content;
-    std::cout.flush();
-  }
-
-  void output_command(std::string session, std::string content) {
-    encode(content);
-    boost::replace_all(content, "\n", "&#13;");
-    boost::replace_all(content, "\r", "");
-    boost::format fmt
-        ("<script>document.getElementById('%1%').innerHTML += '<b>%2%</b>';</script>");
-    std::cout << fmt%session%content;
-    std::cout.flush();
-  }
+  void operator=(const Appender &) = delete;  //disallow assignment constructor to copy.
 
  private:
   Appender() = default;
 
-  void encode(std::string &data) {
-    using boost::algorithm::replace_all;
-    replace_all(data, "&", "&amp;");
-    replace_all(data, "\"", "&quot;");
-    replace_all(data, "\'", "&apos;");
-    replace_all(data, "<", "&lt;");
-    replace_all(data, ">", "&gt;");
-  }
+  
 };
 
-struct Client : public std::enable_shared_from_this<Client> {
-  Client(std::string session, std::string file_name, tcp::resolver::query q)
+struct Client : public std::enable_shared_from_this<Client> {         //structure default mem type is public.
+  Client(std::string session, std::string file_name, tcp::resolver::query q)    
       : session(std::move(session)), q(std::move(q)) {
+
     file.open("test_case/" + file_name, std::ios::in);
     if (!file.is_open())
-      Appender::getInstance().output_command(session, "DAMN file not open!");
+      output_command("file open failed!");
   }
-
-  void read_handler() {
-    auto self(shared_from_this());
-    tcp_socket.async_receive(buffer(bytes),
-                             [this, self](boost::system::error_code ec,
-                                          std::size_t length) {
-                               if (!ec) {
-                                 std::string data(bytes.begin(),
-                                                  bytes.begin()
-                                                      + length); // this might not be a entire line!
-                                 Appender::getInstance()
-                                     .output_shell(session, data);
-
-                                 if (data.find("% ")!=std::string::npos) {
-                                   std::string command;
-                                   getline(file, command);
-                                   Appender::getInstance()
-                                       .output_command(session, command + '\n');
-                                   tcp_socket
-                                       .write_some(buffer(command + '\n'));
-                                   //boost::asio::write(tcp_socket, buffer(command + "\r\n", command.size()+2));
-                                 }
-                                 read_handler();
-                               }
-                             });
-  }
-
-  void connect_handler() {
-    read_handler();
-  }
-
-  void resolve_handler(tcp::resolver::iterator it) {
-    auto self(shared_from_this());
-    tcp_socket.async_connect(*it, [this, self](boost::system::error_code ec) {
-      if (!ec)
-        connect_handler();
-    });
-  }
-
   void resolve() {
     auto self(shared_from_this());
     resolver.async_resolve(q,
@@ -215,35 +153,108 @@ struct Client : public std::enable_shared_from_this<Client> {
                                         tcp::resolver::iterator it) {
                              if (!ec)
                                resolve_handler(it);
+                            
+                              boost::format fmt("<script>document.getElementById('%1%').innerHTML += '%2%';</script>");
+                              cout << fmt%session%"error!!!!!!!!!" << flush;
+                               
                            });
+  }
+
+  void resolve_handler(tcp::resolver::iterator it) {
+    auto self(shared_from_this());
+    tcp_socket.async_connect(*it, [this, self](boost::system::error_code ec) {    //the socket is not returned to the closed state.
+      if (!ec)
+        read_handler();
+    });
+  }
+  void read_handler() {
+    auto self(shared_from_this());
+    /* format note:
+      this ptr for calling bytes, shell_output, etc. they all non-static member only can be used after instanced.
+    self is for prolonging life time of smart_ptr.
+      function note: 
+      async_receive, when receive msg, it's triggered. 
+    */
+    tcp_socket.async_receive(boost::asio::buffer(bytes),
+                             [this, self](boost::system::error_code ec,   
+                                          std::size_t bytes_transferred) {
+                                                                              boost::format fmt("<script>document.getElementById('%1%').innerHTML += '%2%';</script>");
+                              cout << fmt%session%"async_receive_begin" << flush;
+                               if (!ec) { //if no error code.
+                                 std::string data(bytes.begin(),bytes.begin() + bytes_transferred); 
+                                 shell_output(data);
+
+                                 if (data.find("% ")!=std::string::npos) {
+                                   std::string command;
+                                   getline(file, command);
+                                   output_command(command + '\n');
+                                   tcp_socket.write_some(buffer( command + '\n'));
+                                   //boost::asio::write(tcp_socket, buffer(command + "\r\n", command.size()+2));
+                                 }
+                                 read_handler(); 
+
+                                cout << fmt%session%"async_receive_end" << flush;
+                               }
+                             });
+  }
+
+  
+
+  void shell_output(std::string content) {
+    encode(content);
+    boost::replace_all(content, "\n", "&#13;");
+    boost::replace_all(content, "\r", "");
+    boost::format fmt("<script>document.getElementById('%1%').innerHTML += '%2%';</script>");
+    cout << fmt%session%content << flush;
+  }
+
+  void output_command(std::string content) {
+    encode(content);
+    boost::replace_all(content, "\n", "&#13;");
+    boost::replace_all(content, "\r", "");
+    boost::format fmt("<script>document.getElementById('%1%').innerHTML += '<b>%2%</b>';</script>");
+    cout << fmt%session%content << flush;
+  }
+
+  void encode(std::string &data) {
+    using boost::algorithm::replace_all;   
+    /*
+    1. using 名稱空間::成員
+    2. using namespace 名稱空間
+    two ways to indicate member's namespace. 
+    */
+    replace_all(data, "&", "&amp;");
+    replace_all(data, "\"", "&quot;");
+    replace_all(data, "\'", "&apos;");
+    replace_all(data, "<", "&lt;");
+    replace_all(data, ">", "&gt;");
   }
 
   std::string session; // e.g. "s0"
   tcp::resolver::query q;
-  tcp::resolver resolver{service};
-  tcp::socket tcp_socket{service};
+  tcp::resolver resolver{service};    //initial value, service which is global value.
+  tcp::socket tcp_socket{service};    //initial value, service which is global value.
   std::array<char, 4096> bytes;
   std::fstream file; // e.g. "t1.txt"
 };
+
 int main() {
-  /* [Required] HTTP Header */
-           
+    /* HTTP Header needed*/
     cout << "Content-type: text/html\r\n\r\n";
   
-    string a = getenv("QUERY_STRING");
     console_format console_me;
     cout  << console_me.console_response(getenv("QUERY_STRING"));
+
     int k = 0;
     for (auto npshell : console_me.npshells) {
-    if (!npshell.port.empty()) {
-      tcp::resolver::query q{npshell.name, npshell.port};
-      std::make_shared<Client>("s" + std::to_string(k), npshell.file, std::move(q))
-          ->resolve();
+      if (!npshell.port.empty()) {
+        tcp::resolver::query q(npshell.name, npshell.port);     //{ip, port}
+        std::make_shared<Client>("s" + std::to_string(k), npshell.file, std::move(q))   //socket{1~5}, file name, query(name,port)
+            ->resolve();
         k++;
-    }
+      }
   }
-
+ 
   service.run();
-
   return 0;
 }

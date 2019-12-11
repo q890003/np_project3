@@ -84,7 +84,6 @@ class console_format{
             std::string key;
             std::string value;
             int shell_num = 0;
-            int tt = 0;
             for(auto &it : test){
                 key =  it.substr(0, it.find('='));
                 value = it.substr(key.size() + 1);
@@ -96,10 +95,8 @@ class console_format{
                         npshells[shell_num].port = value;
                     else if(key.front() == 'f'){
                         npshells[shell_num].file = value;
-                    }
-                    tt++;
-                    if(tt%3==0)
                         shell_num ++;
+                    }
                 }
             }
             std::string table;
@@ -153,10 +150,6 @@ struct Client : public std::enable_shared_from_this<Client> {         //structur
                                         tcp::resolver::iterator it) {
                              if (!ec)
                                resolve_handler(it);
-                            
-                              boost::format fmt("<script>document.getElementById('%1%').innerHTML += '%2%';</script>");
-                              cout << fmt%session%"error!!!!!!!!!" << flush;
-                               
                            });
   }
 
@@ -170,18 +163,16 @@ struct Client : public std::enable_shared_from_this<Client> {         //structur
   void read_handler() {
     auto self(shared_from_this());
     /* format note:
-      this ptr for calling bytes, shell_output, etc. they all non-static member only can be used after instanced.
+      this ptr for calling receive_msg, shell_output, etc. they all non-static member only can be used after instanced.
     self is for prolonging life time of smart_ptr.
       function note: 
       async_receive, when receive msg, it's triggered. 
     */
-    tcp_socket.async_receive(boost::asio::buffer(bytes),
+    tcp_socket.async_receive(boost::asio::buffer(receive_msg),
                              [this, self](boost::system::error_code ec,   
                                           std::size_t bytes_transferred) {
-                                                                              boost::format fmt("<script>document.getElementById('%1%').innerHTML += '%2%';</script>");
-                              cout << fmt%session%"async_receive_begin" << flush;
                                if (!ec) { //if no error code.
-                                 std::string data(bytes.begin(),bytes.begin() + bytes_transferred); 
+                                 std::string data(receive_msg.begin(),receive_msg.begin() + bytes_transferred); 
                                  shell_output(data);
 
                                  if (data.find("% ")!=std::string::npos) {
@@ -192,8 +183,6 @@ struct Client : public std::enable_shared_from_this<Client> {         //structur
                                    //boost::asio::write(tcp_socket, buffer(command + "\r\n", command.size()+2));
                                  }
                                  read_handler(); 
-
-                                cout << fmt%session%"async_receive_end" << flush;
                                }
                              });
   }
@@ -234,7 +223,7 @@ struct Client : public std::enable_shared_from_this<Client> {         //structur
   tcp::resolver::query q;
   tcp::resolver resolver{service};    //initial value, service which is global value.
   tcp::socket tcp_socket{service};    //initial value, service which is global value.
-  std::array<char, 4096> bytes;
+  std::array<char, 4096> receive_msg;
   std::fstream file; // e.g. "t1.txt"
 };
 

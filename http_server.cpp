@@ -93,11 +93,22 @@ class http_server {
                             [this](boost::system::error_code ec,
                                    std::size_t length) {
                               if (!ec) {
-                                vector<std::string> request_vec;                       
+                                vector<std::string> request_vec;
+                                vector<std::string> parse_request_line;
+                                vector<std::string> querry_line;
+                                map<string, string> client_env;
                                 auto result = string(_data.begin(), _data.begin() + length);
                                 boost::split( request_vec, result, boost::is_any_of( "\n" ), boost::token_compress_on );
+                                for(auto &it : request_vec){
+                                  if(it.back()== '\r')
+                                    it.pop_back();
+                                }
                                 //it'll delete "?" which is key to tell if there is query string.   gboost::split( msg1, request_vec.at(0), boost::is_any_of( ":? " ), boost::token_compress_on );
-                                map<string, string> client_env;
+                                boost::split( parse_request_line, request_vec.at(0), boost::is_any_of( " " ), boost::token_compress_on );
+                                boost::split( querry_line, parse_request_line.at(1), boost::is_any_of( "?" ), boost::token_compress_on );
+
+                                
+                                /*
                                 string msg1 = request_vec.at(0);
                                 string function;
                                 string query;
@@ -114,25 +125,39 @@ class http_server {
 
                                 auto protocol = msg1.substr(msg1.find_last_of(" ")+1);
                                 auto host = request_vec.at(1).substr(request_vec.at(1).find(" ")+1);
+                                */
+                                if(querry_line.size() <2){ //no "?"
+                                  client_env["QUERY_STRING"] = "";
+                                }else{
+                                  client_env["QUERY_STRING"] = querry_line.at(1);
+                                }
+
+                                auto method = parse_request_line.at(0);
+                                auto program_cgi = querry_line.at(0);
+                                auto protocol = parse_request_line.at(2);
+                                auto host = request_vec.at(1).substr(request_vec.at(1).find(" ")+1);
+                                //query is set.
+                                
 
                                 client_env["REQUEST_METHOD"] = method;
-                                client_env["REQUEST_URI"] = function;
-                                client_env["QUERY_STRING"] = query;
+                                client_env["REQUEST_URI"] = program_cgi;
                                 client_env["SERVER_PROTOCOL"] = protocol;
                                 client_env["HTTP_HOST"] = host;
                                 
+
                                 setenv("REQUEST_METHOD", client_env["REQUEST_METHOD"].c_str(), 1);
                                 setenv("REQUEST_URI", client_env["REQUEST_URI"].c_str(), 1);
                                 setenv("QUERY_STRING", client_env["QUERY_STRING"].c_str(), 1);
                                 setenv("SERVER_PROTOCOL", client_env["SERVER_PROTOCOL"].c_str(), 1);
                                 setenv("HTTP_HOST", client_env["HTTP_HOST"].c_str(), 1);
+                                
                                 setenv("SERVER_ADDR", _socket.local_endpoint().address().to_string().c_str(), 1);
                                 setenv("SERVER_PORT", to_string(_socket.local_endpoint().port()).c_str(), 1);
                                 setenv("REMOTE_ADDR", _socket.remote_endpoint().address().to_string().c_str(), 1);
                                 setenv("REMOTE_PORT", to_string(_socket.remote_endpoint().port()).c_str(), 1);
                                 
                                 // ------------------------------------- dup -------------------------------------
-                                
+                                /*
                                 dup2(_socket.native_handle(), 0);
                                 dup2(_socket.native_handle(), 1);
                                 dup2(_socket.native_handle(), 2);
@@ -148,7 +173,7 @@ class http_server {
                                   perror("execv error");
                                   exit(-1);
                                 }
-                                
+                                */
                                 
                               }
                             });

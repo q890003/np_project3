@@ -136,11 +136,12 @@ class http_server {
                                 auto program_cgi = querry_line.at(0);
                                 auto protocol = parse_request_line.at(2);
                                 auto host = request_vec.at(1).substr(request_vec.at(1).find(" ")+1);
-                                //query is set.
+                                
                                 
 
                                 client_env["REQUEST_METHOD"] = method;
                                 client_env["REQUEST_URI"] = program_cgi;
+                                //query is set.
                                 client_env["SERVER_PROTOCOL"] = protocol;
                                 client_env["HTTP_HOST"] = host;
                                 
@@ -157,7 +158,7 @@ class http_server {
                                 setenv("REMOTE_PORT", to_string(_socket.remote_endpoint().port()).c_str(), 1);
                                 
                                 // ------------------------------------- dup -------------------------------------
-                                /*
+                                
                                 dup2(_socket.native_handle(), 0);
                                 dup2(_socket.native_handle(), 1);
                                 dup2(_socket.native_handle(), 2);
@@ -173,7 +174,7 @@ class http_server {
                                   perror("execv error");
                                   exit(-1);
                                 }
-                                */
+                                
                                 
                               }
                             });

@@ -6,10 +6,11 @@
 #include <string>
 #include <sys/types.h>
 #include <map>
+#include <string>
 #include <sys/wait.h>
 #include <unistd.h>
-#include "string_manipulator.h"
-
+//#include "string_manipulator.h"
+#include <boost/algorithm/string.hpp>
 using boost::asio::ip::tcp;
 using namespace std;
 
@@ -135,8 +136,7 @@ class http_server {
                                 auto method = parse_request_line.at(0);
                                 auto program_cgi = querry_line.at(0);
                                 auto protocol = parse_request_line.at(2);
-                                auto host = request_vec.at(1).substr(request_vec.at(1).find(" ")+1);
-                                
+                                auto host = request_vec.at(1).substr(request_vec.at(1).find(":")+2 ,request_vec.at(1).rfind(":") - (request_vec.at(1).find(":")+2));
                                 
 
                                 client_env["REQUEST_METHOD"] = method;

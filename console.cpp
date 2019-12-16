@@ -77,8 +77,6 @@ class console_format{
                       "      </tbody>\n"
                       "    </table>\n"
                       "  </body>\n");
-
-
             vector<string> test;
             boost::split(test, querry_env, boost::is_any_of("&"));
             std::string key;
@@ -114,27 +112,6 @@ class console_format{
 
 
 };
-//paradiam for learning OOP.
-class Appender {
- public:
-  static Appender &getInstance() {      //static function is created when defining class "object", not declatrion of instance.
-    static Appender instance;           //static member function can only access static member data. In here, it create only one instnce.
-    return instance;                    //in addiition, it sets public, so to be accessable.
-  }
-  /* static member function 只能存取 static member variable
-    reason: static function can't use "this", which is to say it can not access normal variable/function members.
-  */                                  
-
-  Appender(const Appender &) = delete;    //disallow copy constructor to copy.
-
-  void operator=(const Appender &) = delete;  //disallow assignment constructor to copy.
-
- private:
-  Appender() = default;
-
-  
-};
-
 struct Client : public std::enable_shared_from_this<Client> {         //structure default mem type is public.
   Client(std::string session, std::string file_name, tcp::resolver::query q)    
       : session(std::move(session)), q(std::move(q)) {
@@ -224,12 +201,12 @@ struct Client : public std::enable_shared_from_this<Client> {         //structur
     replace_all(data, ">", "&gt;");
   }
 
-  std::string session; // e.g. "s0"
+  std::string session; // "s0~s4"
   tcp::resolver::query q;
   tcp::resolver resolver{service};    //initial value, service which is global value.
   tcp::socket tcp_socket{service};    //initial value, service which is global value.
   std::array<char, 4096> receive_msg;
-  std::fstream file; // e.g. "t1.txt"
+  std::fstream file; // "t1~t4.txt"
 };
 
 int main() {

@@ -266,7 +266,7 @@ class Session_handler : public std::enable_shared_from_this<Session_handler>{
                               [this, self](const boost::system::error_code &ec,
                                             tcp::resolver::iterator it) {
                                 if (!ec)
-                                  cout << "resolve complete!" << endl;
+                                  cout <<session <<  " async_resolve success" << endl;
                                   resolve_handler(it);
                               });
       }
@@ -275,7 +275,7 @@ class Session_handler : public std::enable_shared_from_this<Session_handler>{
         auto self(shared_from_this());
         tcp_socket.async_connect(*it, [this, self](boost::system::error_code ec) {    //the socket is not returned to the closed state.
           if (!ec)
-            cout << "Connect complete!" << endl;
+            cout <<session <<  " async_connect success"<< endl;
             read_handler();
         });
       }
@@ -310,8 +310,9 @@ class Session_handler : public std::enable_shared_from_this<Session_handler>{
                                     }
                                     
                                     read_handler(); 
-                                  } 
+                                  }else{
                                     cout << session << "_err: " <<ec << endl;
+                                  }
                                 });
       }
 
@@ -345,12 +346,12 @@ class Session_handler : public std::enable_shared_from_this<Session_handler>{
         replace_all(data, ">", "&gt;");
       }
       shared_ptr<Session_handler> session_ptr;
-      std::string session; // e.g. "s0"
+      std::string session; // "s0~s4"
       tcp::resolver::query to_npsehll_info;
       tcp::resolver resolver{io_service_test};    //initial value, service which is global value.
       tcp::socket tcp_socket{io_service_test};    //initial value, service which is global value.
       std::array<char, 4096> receive_msg;
-      std::fstream file; // e.g. "t1.txt"
+      std::fstream file; // "t1~t4.txt"
     };
     Session_handler(tcp::socket socket) : socket_to_client(std::move(socket)){}
     void cgi_handler(){
@@ -448,8 +449,8 @@ int main(int argc, char *argv[]) {
     http_server session(std::atoi(argv[1]));
     io_service_test.run();
   }
-  catch (exception &e) {
-    cerr << "Exception: " << e.what() << endl;
+  catch (exception &ecep) {
+    cerr << "Exception: " << ecep.what() << endl;
   }
 
   

@@ -229,10 +229,10 @@ struct Client : public std::enable_shared_from_this<Client> {         //structur
 
 int main() {
     /* HTTP Header needed*/
-    cout << "Content-type: text/html\r\n\r\n";
+    cout << "Content-type: text/html\r\n\r\n" << flush;
   
     console_format console_me;
-    cout  << console_me.console_response(getenv("QUERY_STRING"));
+    cout  << console_me.console_response(getenv("QUERY_STRING")) << flush;
 
     int k = 0;
     for (auto npshell : console_me.npshells) {

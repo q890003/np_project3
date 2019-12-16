@@ -9,7 +9,6 @@
 #include <string>
 #include <sys/wait.h>
 #include <unistd.h>
-//#include "string_manipulator.h"
 #include <boost/algorithm/string.hpp>
 using boost::asio::ip::tcp;
 using namespace std;

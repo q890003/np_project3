@@ -178,10 +178,15 @@ struct Client : public std::enable_shared_from_this<Client> {         //structur
                                  if (data.find("% ")!=std::string::npos) {
                                    std::string command;
                                    getline(file, command);
-                                   output_command(command + '\n');
-                                   tcp_socket.write_some(buffer( command + '\n'));
-                                   //boost::asio::write(tcp_socket, buffer(command + "\r\n", command.size()+2));
-                                 }
+                                   command = command +'\n';
+                                   output_command(command );
+                                   //tcp_socket.write_some(buffer( command + '\n'));
+                                   tcp_socket.async_write(buffer(command, command.length()),[](error_code ec, size_t transferredBytes){
+                                                                                              if (!ec) {
+                                                                                                  //no other operation.
+                                                                                              }
+                                                                                            });
+                                  }
                                  read_handler(); 
                                }
                              });

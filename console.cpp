@@ -157,13 +157,14 @@ struct Client : public std::enable_shared_from_this<Client> {         //structur
                                    getline(file, command);
                                    command = command +'\n';
                                    output_command(command );
-                                   //tcp_socket.write_some(buffer( command + '\n'));
-                                   tcp_socket.async_write(buffer(command, command.length()),[](error_code ec, size_t transferredBytes){
+                                   //tcp_socket.write_some(buffer( command));
+                                   tcp_socket.async_write_some(buffer(command, command.length()),[](error_code ec, size_t transferredBytes){
                                                                                               if (!ec) {
                                                                                                   //no other operation.
                                                                                               }
                                                                                             });
-                                  }
+                                  
+                                 }
                                  read_handler(); 
                                }
                              });
